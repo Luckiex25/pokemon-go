@@ -87,3 +87,27 @@ def profile():
   return render_template('users/profile.html', 
                          title='Profile Page',
                          user=user)
+
+@users_bp.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+  if request.method == 'POST':
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_new_password = request.form.get('confirm_new_password')
+
+    if bcrypt.check_password_hash(current_user.password, current_password):
+      if new_password == confirm_new_password:
+        pwd_hash = bcrypt.generate_password_hash(password=new_password).decode('utf-8')
+        current_user.password = pwd_hash
+        db.session.commit()
+        flash('Password changed successfully!', 'success')
+        return redirect(url_for('users.profile'))
+      else:
+        flash('New passwords do not match!', 'warning')
+        return redirect(url_for('users.change_password'))
+    else:
+      flash('Current password is incorrect!', 'warning')
+      return redirect(url_for('users.change_password'))
+ 
+  return render_template('users/change_password.html',title='Change Password Page')
